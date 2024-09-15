@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
-import CloudFlare
 import os
+import CloudFlare
 from flask import Flask, request
 from flask_httpauth import HTTPBasicAuth
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -13,15 +13,16 @@ auth = HTTPBasicAuth()
 auth_user = os.environ.get('AUTH_USER', None)
 auth_pass = os.environ.get('AUTH_PASS', None)
 api_token = os.environ.get('API_TOKEN', None)
+record_type = os.environ.get('RECORD_TYPE', 'A')
+record_ttl = os.environ.get('RECORD_TTL', 60)
 
 users = {
     auth_user: generate_password_hash(auth_pass)
 }
 
 @auth.verify_password
-def verify_password(username, password):
-    if username in users and \
-            check_password_hash(users.get(username), password):
+def verify_password(username, password): # pylint: disable=inconsistent-return-statements
+    if username in users and check_password_hash(users.get(username), password):
         return username
 
 @auth.error_handler
@@ -45,17 +46,17 @@ def main():
 
     # Test inputs to determine the next step
     if hostname == 'blank':
-        return "nohost"
-    elif ip == 'blank':
-        return "noip"
+        response = "nohost"
+    if ip == 'blank':
+        response = "noip"
     else:
         response = check_cloudflare(hostname, ip)
-        return(response)
+
+    return response
 
 # Cloudflare Functions
 def check_cloudflare(hostname, ip):
     record_name = hostname
-    record_type = 'A'
 
     # Determine the DNS zone from the supplied hostname
     hostname_split = hostname.split('.')
@@ -71,7 +72,7 @@ def check_cloudflare(hostname, ip):
             log_msg('Zone not found')
         zone_id = zones[0]['id']
     except CloudFlare.exceptions.CloudFlareAPIError as e:
-        log_msg('/zones.get %d %s' % (e, e))
+        log_msg('/zones.get %d %s' % (e, e)) # pylint: disable=bad-string-format-type, consider-using-f-string
 
     # Get the DNS record ID
     try:
@@ -80,12 +81,12 @@ def check_cloudflare(hostname, ip):
             log_msg('DNS record not found')
         record_id = dns_records[0]['id']
         record_content = dns_records[0]['content']
-        record_ttl = dns_records[0]['ttl']
+        record_ttl_current = dns_records[0]['ttl']
     except CloudFlare.exceptions.CloudFlareAPIError as e:
-        log_msg('/zones.dns_records.get %d %s' % (e, e))
+        log_msg('/zones.dns_records.get %d %s' % (e, e)) # pylint: disable=bad-string-format-type, consider-using-f-string
 
     # Test if the record needs updating
-    if record_content != ip:
+    if record_content != ip or record_ttl_current != record_ttl:
         log_msg("A DNS record update is needed for " + record_name)
 
         # Update the DNS record
@@ -93,19 +94,20 @@ def check_cloudflare(hostname, ip):
             'type': record_type,
             'name': record_name,
             'content': ip,
-            'ttl': 60
+            'ttl': record_ttl
         }
 
         try:
             cf.zones.dns_records.put(zone_id, record_id, data=dns_record)
             log_msg('DNS record updated successfully: ' + record_name + "(" + ip + ")")
+            response = "good " + ip
         except CloudFlare.exceptions.CloudFlareAPIError as e:
-            log_msg('/zones.dns_records.put %d %s' % (e, e))
-            return "dnserr"
-
-        return("good " + ip)
+            log_msg('/zones.dns_records.put %d %s' % (e, e)) # pylint: disable=bad-string-format-type, consider-using-f-string
+            response = "dnserr"
     else:
-        return("nochg " + ip)
+        response = "nochg " + ip
+
+    return response
 
 def log_msg(msg):
     print(msg)
