@@ -1,0 +1,8 @@
+# Documentation: https://pylint.readthedocs.io/en/latest/
+[MESSAGES CONTROL]
+disable=
+    line-too-long,
+    fixme,
+    missing-function-docstring,
+    missing-module-docstring,
+    trailing-newlines
