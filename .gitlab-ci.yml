@@ -1,6 +1,6 @@
 stages:
   - lint
-  #- test
+  - test
   - build
 
 lint-pylint:
@@ -11,13 +11,13 @@ lint-pylint:
     - pip install pylint
     - pylint app.py
 
-#test-app:
-#  stage: test
-#  image: python:3.12-slim
-#  script:
-#    - pip install --no-cache-dir -r requirements.txt
-#    - pip install pytest pytest-flask
-#    - python -m pytest -v
+test-app:
+  stage: test
+  image: python:3.12-slim
+  script:
+    - pip install --no-cache-dir -r requirements.txt
+    - pip install pytest pytest-flask
+    - python -m pytest -v
 
 build:
   stage: build
