@@ -47,7 +47,7 @@ def main():
     # Test inputs to determine the next step
     if hostname == 'blank':
         response = "nohost"
-    if ip == 'blank':
+    elif ip == 'blank':
         response = "noip"
     else:
         response = check_cloudflare(hostname, ip)
