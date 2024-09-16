@@ -1,6 +1,6 @@
-# Keep cloudflare at 2.* versions currently.
+# Keep cloudflare at 2.19.* versions currently.
 # 3.x versions will require a rewrite
-cloudflare==2.20.0
+cloudflare==2.19.4
 Flask==3.0.3
 Flask-HTTPAuth==4.8.0
 gunicorn==23.0.0
