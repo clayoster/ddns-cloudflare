@@ -57,16 +57,16 @@ def main():
 # Cloudflare Functions
 def check_cloudflare(hostname, ip):
     # Check if API token is set appropriately
-    if api_token != None and api_token != '':
+    if api_token not in (None, ''):
         record_name = hostname
-    
+
         # Determine the DNS zone from the supplied hostname
         hostname_split = hostname.split('.')
         zone_name = '.'.join(hostname_split[1:])
-    
+
         # Initialize the Cloudflare API
         cf = CloudFlare.CloudFlare(token=api_token)
-    
+
         # Get the DNS zone ID
         try:
             zones = cf.zones.get(params={'name': zone_name})
@@ -75,7 +75,7 @@ def check_cloudflare(hostname, ip):
             zone_id = zones[0]['id']
         except CloudFlare.exceptions.CloudFlareAPIError as e:
             log_msg('/zones.get %d %s' % (e, e)) # pylint: disable=bad-string-format-type, consider-using-f-string
-    
+
         # Get the DNS record ID
         try:
             dns_records = cf.zones.dns_records.get(zone_id, params={'name': record_name, 'type': record_type})
@@ -86,11 +86,11 @@ def check_cloudflare(hostname, ip):
             record_ttl_current = dns_records[0]['ttl']
         except CloudFlare.exceptions.CloudFlareAPIError as e:
             log_msg('/zones.dns_records.get %d %s' % (e, e)) # pylint: disable=bad-string-format-type, consider-using-f-string
-    
+
         # Test if the record needs updating
         if record_content != ip or record_ttl_current != record_ttl:
             log_msg("A DNS record update is needed for " + record_name)
-    
+
             # Update the DNS record
             dns_record = {
                 'type': record_type,
@@ -98,7 +98,7 @@ def check_cloudflare(hostname, ip):
                 'content': ip,
                 'ttl': record_ttl
             }
-    
+
             try:
                 cf.zones.dns_records.put(zone_id, record_id, data=dns_record)
                 log_msg('DNS record updated successfully: ' + record_name + "(" + ip + ")")
