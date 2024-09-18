@@ -112,7 +112,7 @@ def check_cloudflare(hostname, ip):
                 log_msg('/zones.dns_records.put %d %s' % (e, e)) # pylint: disable=bad-string-format-type, consider-using-f-string
                 response = "dnserr"
         else:
-            log_msg('No update needed for ' + hostname + ' (' + ip + ')'))
+            log_msg('No update needed for ' + hostname + ' (' + ip + ')')
             response = "nochg " + ip
     else:
         log_msg('No api token has been configured for Cloudflare')
