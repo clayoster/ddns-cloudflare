@@ -30,6 +30,7 @@ def unauthorized():
     return "badauth"
 
 @app.route('/update')
+@app.route('/nic/update')
 @auth.login_required
 def main():
     # Set hostname variable
@@ -39,8 +40,8 @@ def main():
         hostname = 'blank'
 
     # Set ip variable
-    if 'ip' in request.args:
-        ip = request.args.get('ip')
+    if 'myip' in request.args:
+        ip = request.args.get('myip')
     else:
         ip = 'blank'
 
