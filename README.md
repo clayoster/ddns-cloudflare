@@ -1,7 +1,6 @@
 # ddns-cloudflare
 
-Self-hosted DDNS service for receiving public IP updates from a router or other local source
-and updating a DNS record in Cloudflare.
+A self-hosted DDNS service for receiving public IP updates from a router or other local source and updating a DNS record in Cloudflare.
 
 The primary purposes for building yet another DDNS tool for updating Cloudflare records:
 - Many other solutions depend upon using a `Global` API token which is unacceptable for this singular purpose. This solution allows the use of a API token scoped with privileges to edit a single DNS zone.
@@ -9,9 +8,25 @@ The primary purposes for building yet another DDNS tool for updating Cloudflare 
 - Self-hosted option for receving DDNS updates from a router or other local source rather than depending on querying an external API for public IP address changes
 
 Valid response codes were gathered from here:\
-  https://help.dyn.com/remote-access-api/\
+  https://help.dyn.com/remote-access-api \
   https://github.com/troglobit/inadyn/blob/master/plugins/common.c
 
-This service requires a GET request in the following format
-  
-    https://<username>:<password>@ddns.example.com/nic/update?hostname=<dns record to update>&myip=<public ip>
+Manual updates can be sent to this service with a GET request in the following format: \
+`https://<username>:<password>@ddns.example.com/nic/update?hostname=<dns record to update>&myip=<public ip>`
+
+#### Example docker-compose.yml file
+
+```
+version: '3.4'
+services:
+  ddns-cloudflare:
+    container_name: ddns-cloudflare
+    image: ghcr.io/clayoster/test-ddns-cloudflare:0.1.0
+    restart: always
+    environment:
+       - AUTH_USER=<auth username>  # Username for authenticating to the ddns service
+       - AUTH_PASS=<auth password>  # Password for authenticating to the ddns service
+       - API_TOKEN=<cloudflare api token>  # Your CloudFlare API token
+    ports:
+        - "8080:8080"
+
