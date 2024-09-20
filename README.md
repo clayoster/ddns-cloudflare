@@ -8,9 +8,10 @@ The primary purposes for building yet another DDNS tool for updating Cloudflare 
   - Unforunately Cloudflare does not allow limiting the edit privileges to a single DNS record in a zone at this point.
 - Self-hosted option for receving DDNS updates from a router or other local source rather than depending on querying an external API for public IP address changes
 
-Valid response codes were gathered from here:
+Valid response codes were gathered from here:\
+  https://help.dyn.com/remote-access-api/\
   https://github.com/troglobit/inadyn/blob/master/plugins/common.c
 
 This service requires a GET request in the following format
   
-    https://<username>:<password>@ddns.example.com/update?hostname=<dns record to update>&ip=<public ip>
+    https://<username>:<password>@ddns.example.com/nic/update?hostname=<dns record to update>&myip=<public ip>

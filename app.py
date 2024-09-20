@@ -27,9 +27,11 @@ def verify_password(username, password): # pylint: disable=inconsistent-return-s
 
 @auth.error_handler
 def unauthorized():
+    log_msg('Authentication failed')
     return "badauth"
 
 @app.route('/update')
+@app.route('/nic/update')
 @auth.login_required
 def main():
     # Set hostname variable
@@ -39,17 +41,20 @@ def main():
         hostname = 'blank'
 
     # Set ip variable
-    if 'ip' in request.args:
-        ip = request.args.get('ip')
+    if 'myip' in request.args:
+        ip = request.args.get('myip')
     else:
         ip = 'blank'
 
     # Test inputs to determine the next step
     if hostname == 'blank':
+        log_msg('Incoming request did not contain an IP')
         response = "nohost"
     elif ip == 'blank':
+        log_msg('Incoming request did not contain an IP')
         response = "noip"
     else:
+        log_msg('Received update request for ' + hostname + ' (' + ip + ')')
         response = check_cloudflare(hostname, ip)
 
     return response
@@ -71,7 +76,7 @@ def check_cloudflare(hostname, ip):
         try:
             zones = cf.zones.get(params={'name': zone_name})
             if len(zones) == 0:
-                log_msg('Zone not found')
+                log_msg('Zone ' + zone_name + ' not found')
             zone_id = zones[0]['id']
         except CloudFlare.exceptions.CloudFlareAPIError as e:
             log_msg('/zones.get %d %s' % (e, e)) # pylint: disable=bad-string-format-type, consider-using-f-string
@@ -80,7 +85,7 @@ def check_cloudflare(hostname, ip):
         try:
             dns_records = cf.zones.dns_records.get(zone_id, params={'name': record_name, 'type': record_type})
             if len(dns_records) == 0:
-                log_msg('DNS record not found')
+                log_msg('DNS record ' + record_name + ' not found')
             record_id = dns_records[0]['id']
             record_content = dns_records[0]['content']
             record_ttl_current = dns_records[0]['ttl']
@@ -101,14 +106,16 @@ def check_cloudflare(hostname, ip):
 
             try:
                 cf.zones.dns_records.put(zone_id, record_id, data=dns_record)
-                log_msg('DNS record updated successfully: ' + record_name + "(" + ip + ")")
+                log_msg('DNS record updated successfully: ' + record_name + ' (' + ip + ')')
                 response = "good " + ip
             except CloudFlare.exceptions.CloudFlareAPIError as e:
                 log_msg('/zones.dns_records.put %d %s' % (e, e)) # pylint: disable=bad-string-format-type, consider-using-f-string
                 response = "dnserr"
         else:
+            log_msg('No update needed for ' + hostname + ' (' + ip + ')')
             response = "nochg " + ip
     else:
+        log_msg('No api token has been configured for Cloudflare')
         response = "noapitoken"
 
     return response
