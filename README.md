@@ -14,8 +14,6 @@ Valid response codes were gathered from here:\
 Manual updates can be sent to this service with a GET request in the following format: \
 `https://<username>:<password>@ddns.example.com/nic/update?hostname=<dns record to update>&myip=<public ip>`
 
-Note that this can use a "scoped" CloudFlare API Token
-
 # Deployment with Docker Compose (Recommended)
 
 *Note: The application requires authentication to be configure via the AUTH_USER and AUTH_PASS environment variables. Without those set, the app will fail to start successfully which is intentional.*
