@@ -1,6 +1,6 @@
 # ddns-cloudflare
 
-A self-hosted DDNS service for receiving public IP updates from a router or other local source and updating a DNS record in Cloudflare.
+This is a self-hosted DDNS service for receiving public IP updates from a router or other local source and updating a DNS record in Cloudflare.
 
 The primary purposes for building yet another DDNS tool for updating Cloudflare records:
 - Many other solutions depend upon using a `Global` API token which is unacceptable for this singular purpose. This solution allows the use of a API token scoped with privileges to edit a single DNS zone.
@@ -14,6 +14,12 @@ Valid response codes were gathered from here:\
 Manual updates can be sent to this service with a GET request in the following format: \
 `https://<username>:<password>@ddns.example.com/nic/update?hostname=<dns record to update>&myip=<public ip>`
 
+Note that this can use a "scoped" CloudFlare API Token
+
+# Deployment with Docker Compose (Recommended)
+
+*Note: The application requires authentication to be configure via the AUTH_USER and AUTH_PASS environment variables. Without those set, the app will fail to start successfully which is intentional.*
+
 #### Example docker-compose.yml file
 
 ```
@@ -24,9 +30,16 @@ services:
     image: ghcr.io/clayoster/test-ddns-cloudflare:0.1.0
     restart: always
     environment:
-       - AUTH_USER=<auth username>  # Username for authenticating to the ddns service
-       - AUTH_PASS=<auth password>  # Password for authenticating to the ddns service
-       - API_TOKEN=<cloudflare api token>  # Your CloudFlare API token
+      # Username for authenticating to the ddns service
+      - AUTH_USER=<auth username>
+      # Password for authenticating to the ddns service
+      - AUTH_PASS=<auth password>
+      # Your CloudFlare API token with access to the necessary DNS Zone
+      - API_TOKEN=<cloudflare api token>
     ports:
         - "8080:8080"
+```
 
+## To-Dos
+- Make "hostname" compatible with accepting up to 20 comma-delimited domain names
+- Upgrade python-cloudflare dependency to version 3 and complete corresponding rewrite
