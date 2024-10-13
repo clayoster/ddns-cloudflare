@@ -2,10 +2,16 @@
 
 This is a self-hosted DDNS service for receiving public IP updates from a router or other local source and updating a DNS record in Cloudflare.
 
+Container builds are available for these platforms: linux/amd64, linux/arm64, linux/arm/v6, linux/arm/v7
+
+---
+
 The primary purposes for building yet another DDNS tool for updating Cloudflare records:
 - Many other solutions depend upon using a `Global` API token which is unacceptable for this singular purpose. This solution allows the use of a API token scoped with privileges to edit a single DNS zone.
   - Unforunately Cloudflare does not allow limiting the edit privileges to a single DNS record in a zone at this point.
 - Self-hosted option for receving DDNS updates from a router or other local source rather than depending on querying an external API for public IP address changes
+
+---
 
 Valid response codes were gathered from here:\
   https://help.dyn.com/remote-access-api \
@@ -25,7 +31,7 @@ Example information that will be used below:
 - Hostname: `home.example.com`
 - Username: `ddns-user`
 - Password: `ddns-password`
-- Server: `ddns.example.com/update?hostname=%h&myip=%i`
+- Server: `ddns.example.com/nic/update?hostname=%h&myip=%i`
 
 ### Manual updates can be sent to this service with a GET request in the following format:
 
@@ -40,7 +46,6 @@ curl http://ddns-user:ddns-password@ddns.example.com:8080/nic/update?hostname=ho
 #### Example docker-compose.yml file
 
 ```
-version: '3.4'
 services:
   ddns-cloudflare:
     container_name: ddns-cloudflare
