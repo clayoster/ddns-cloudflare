@@ -71,13 +71,15 @@ jobs:
 
       - name: Extract metadata (tags, labels) for container
         id: meta
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@v5
         with:
           images: ghcr.io/${{ github.repository }}
+          flavor: |
+            latest=false
           tags: |
             type=semver,pattern={{version}}
             # set latest tag for default branch
-            type=raw,value=latest,enable={{ is_default_branch }}            
+            type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push container image
         id: push
@@ -85,5 +87,6 @@ jobs:
         with:
           context: .
           push: true
+          platforms: linux/amd64,linux/arm64,linux/arm/v6,linux/arm/v7
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
