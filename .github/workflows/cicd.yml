@@ -74,12 +74,10 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ghcr.io/${{ github.repository }}
-          flavor: |
-            latest=false
           tags: |
             type=semver,pattern={{version}}
-            # set latest tag for default branch
-            type=raw,value=latest,enable={{is_default_branch}}
+            # latest tag will automatically be applied if tag matches 0.0.0
+            # to avoid the latest tag, add data after the semver (ex. 0.0.0-beta.1)
 
       - name: Build and push container image
         id: push
