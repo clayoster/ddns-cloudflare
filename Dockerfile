@@ -17,7 +17,7 @@ RUN set -ex \
 EXPOSE 8080
 
 # Allow stdout from python app through to docker logs
-ENV PYTHONUNBUFFERED 1
+ENV PYTHONUNBUFFERED=1
 
 # Run the python app with gunicorn and bind to port 8080
 CMD ["gunicorn", "-w", "1", "--error-logfile", "-", "--log-level", "debug", "-b", "0.0.0.0:8080", "app:app"]
