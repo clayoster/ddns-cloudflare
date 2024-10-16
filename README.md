@@ -2,7 +2,11 @@
 
 This is a self-hosted DDNS service for receiving public IP updates from a router or other local source and updating a DNS record in Cloudflare.
 
-Container builds are available for these platforms: linux/amd64, linux/arm64, linux/arm/v6, linux/arm/v7
+Container images are based on Alpine Linux and are available for these platforms:
+  - linux/amd64
+  - linux/arm64
+  - linux/arm/v6
+  - linux/arm/v7
 
 ---
 
@@ -24,14 +28,15 @@ Example information that will be used below:
 - Cloudflare API token (scoped to a single DNS Zone!): `supersecretapitoken`
 - Username for the ddns-cloudflare service: `ddns-user`
 - Password for the ddns-cloudflare service: `ddns-password`
-- Server running the ddns-cloudflare service: `ddns.example.com`
+- Server running the ddns-cloudflare service: `ddns.example.com:8080`
+  - Port 8080 can be dropped by running the application behind a reverse proxy
 
 ### Sending updates from a router (Using a Unifi Dream Machine as an example)
 - Service: `dyndns`
 - Hostname: `home.example.com`
 - Username: `ddns-user`
 - Password: `ddns-password`
-- Server: `ddns.example.com/nic/update?hostname=%h&myip=%i`
+- Server: `ddns.example.com:8080/nic/update?hostname=%h&myip=%i`
 
 ### Manual updates can be sent to this service with a GET request in the following format:
 
@@ -50,7 +55,7 @@ services:
   ddns-cloudflare:
     container_name: ddns-cloudflare
     # Using 'latest' as an example. specifying a specific version is preferred
-    image: ghcr.io/clayoster/test-ddns-cloudflare:latest
+    image: ghcr.io/clayoster/ddns-cloudflare:latest
     restart: always
     environment:
       # Username for authenticating to the ddns service
