@@ -76,7 +76,7 @@ jobs:
           images: ghcr.io/${{ github.repository }}
           tags: |
             type=semver,pattern={{version}}
-            # latest tag will automatically be applied if tag matches 0.0.0
+            # latest tag will automatically be applied if tag matches 0.0.0 or v0.0.0
             # to avoid the latest tag, add data after the semver (ex. 0.0.0-beta.1)
 
       - name: Build and push container image
