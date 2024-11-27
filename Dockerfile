@@ -14,6 +14,7 @@ RUN set -ex \
     && pip install --no-cache-dir -r requirements.txt \
     && pip cache purge
 
+# Expose port 8080
 EXPOSE 8080
 
 # Allow stdout from python app through to docker logs
