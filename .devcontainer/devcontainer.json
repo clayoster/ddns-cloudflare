@@ -1,6 +1,8 @@
 {
   "dockerFile": "../Dockerfile",
+  "build": {
+    "target": "dev"
+  },
   "context": "..",
   "forwardPorts": [8080,8080]
 }
-  
