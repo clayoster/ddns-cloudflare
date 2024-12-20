@@ -48,5 +48,5 @@ FROM base AS prod
 # Run app as 'app' user
 USER app
 
-# Run the python app with gunicorn and bind to port 8080
-CMD ["gunicorn", "-w", "1", "--error-logfile", "-", "--log-level", "debug", "-b", "0.0.0.0:8080", "app:app"]
+# Run the python app with gunicorn (settings are in gunicorn.conf.py)
+CMD ["gunicorn", "app:app"]
