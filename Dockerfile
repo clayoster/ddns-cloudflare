@@ -18,7 +18,7 @@ COPY . /app
 RUN set -ex \
     && apk upgrade --available --no-cache \
     && rm -rf /var/cache/apk/* \
-    && pip install --no-cache-dir -r requirements.txt \
+    && pip install --no-cache-dir -r app-requirements.txt \
     && pip cache purge \
     && adduser -D app
 
@@ -34,7 +34,7 @@ FROM base AS dev
 RUN set -ex \
     && apk add git \
     && rm -rf /var/cache/apk/* \
-    && pip install --no-cache-dir pylint pytest pytest-flask \
+    && pip install --no-cache-dir -r app-dev-requirements.txt \
     && pip cache purge
 
 # Add environment variables
