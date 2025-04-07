@@ -2,7 +2,7 @@
 ## Base Stage ##
 ################
 # Use an official Python runtime as the base image
-FROM python:3.12-alpine AS base
+FROM python:3.13-alpine AS base
 
 # Allow stdout from python app through to docker logs
 ENV PYTHONUNBUFFERED=1
