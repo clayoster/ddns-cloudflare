@@ -1,7 +1,8 @@
 #!/usr/bin/python3
 
 import os
-import CloudFlare
+import cloudflare
+from cloudflare import Cloudflare
 from flask import Flask, request
 from flask_httpauth import HTTPBasicAuth
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -61,54 +62,60 @@ def main():
 
 # Cloudflare Functions
 def check_cloudflare(hostname, ip):
+    # Initialize record and zone ID variables
+    record_id = None
+    zone_id = None
+
     # Check if API token is set appropriately
     if api_token not in (None, ''):
         record_name = hostname
 
-        # Determine the DNS zone from the supplied hostname
-        hostname_split = hostname.split('.')
-        zone_name = '.'.join(hostname_split[1:])
-
         # Initialize the Cloudflare API
-        cf = CloudFlare.CloudFlare(token=api_token)
+        client = Cloudflare(api_token=api_token)
 
         # Get the DNS zone ID
         try:
-            zones = cf.zones.get(params={'name': zone_name})
-            if len(zones) == 0:
-                log_msg('Zone ' + zone_name + ' not found')
-            zone_id = zones[0]['id']
-        except CloudFlare.exceptions.CloudFlareAPIError as e:
+            zones = client.zones.list()
+            for zone in zones:
+                print(zone.name)
+                #if zone.name == zone_name:
+                if zone.name in hostname:
+                    zone_id = zone.id
+        except cloudflare.APIConnectionError as e:
             log_msg('/zones.get %d %s' % (e, e)) # pylint: disable=bad-string-format-type, consider-using-f-string
 
         # Get the DNS record ID
         try:
-            dns_records = cf.zones.dns_records.get(zone_id, params={'name': record_name, 'type': record_type})
-            if len(dns_records) == 0:
-                log_msg('DNS record ' + record_name + ' not found')
-            record_id = dns_records[0]['id']
-            record_content = dns_records[0]['content']
-            record_ttl_current = dns_records[0]['ttl']
-        except CloudFlare.exceptions.CloudFlareAPIError as e:
+            records = client.dns.records.list(zone_id=zone_id)
+            for record in records:
+                if record.name == record_name:
+                    record_id = record.id
+        except cloudflare.APIConnectionError as e:
+            log_msg('/zones.dns_records.get %d %s' % (e, e)) # pylint: disable=bad-string-format-type, consider-using-f-string
+
+        # Get the current DNS record
+        try:
+            dns_record = client.dns.records.get(dns_record_id=record_id, zone_id=zone_id)
+            # Set variables from the current record data
+            record_content = dns_record.content
+            record_ttl_current = dns_record.ttl
+        except cloudflare.APIConnectionError as e:
             log_msg('/zones.dns_records.get %d %s' % (e, e)) # pylint: disable=bad-string-format-type, consider-using-f-string
 
         # Test if the record needs updating
         if record_content != ip or record_ttl_current != record_ttl:
             log_msg("A DNS record update is needed for " + record_name)
 
-            # Update the DNS record
-            dns_record = {
-                'type': record_type,
-                'name': record_name,
-                'content': ip,
-                'ttl': record_ttl
-            }
-
+            # Update the record
             try:
-                cf.zones.dns_records.put(zone_id, record_id, data=dns_record)
+                client.dns.records.update(zone_id=zone_id, dns_record_id=record_id,
+                    type=record_type,
+                    name=record_name,
+                    content=ip,
+                    ttl=record_ttl)
                 log_msg('DNS record updated successfully: ' + record_name + ' (' + ip + ')')
                 response = "good " + ip
-            except CloudFlare.exceptions.CloudFlareAPIError as e:
+            except cloudflare.APIConnectionError as e:
                 log_msg('/zones.dns_records.put %d %s' % (e, e)) # pylint: disable=bad-string-format-type, consider-using-f-string
                 response = "dnserr"
         else:
