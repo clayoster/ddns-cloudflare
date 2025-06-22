@@ -2,8 +2,7 @@
 
 import ipaddress
 import os
-import cloudflare
-from cloudflare import Cloudflare
+from cloudflare import Cloudflare, APIConnectionError, RateLimitError, APIStatusError
 from flask import Flask, request
 from flask_httpauth import HTTPBasicAuth
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -74,9 +73,6 @@ def is_valid_ip(ip):
 
 # Cloudflare Functions
 def check_cloudflare(hostname, ip):
-    # Initialize record and zone ID variables
-    record_id = None
-    zone_id = None
 
     # Check if API token is set appropriately
     if api_token not in (None, ''):
@@ -86,56 +82,139 @@ def check_cloudflare(hostname, ip):
         client = Cloudflare(api_token=api_token)
 
         # Get the DNS zone ID
-        try:
-            zones = client.zones.list()
-            for zone in zones:
-                print(zone.name)
-                #if zone.name == zone_name:
-                if zone.name in hostname:
-                    zone_id = zone.id
-        except cloudflare.APIConnectionError as e:
-            log_msg('/zones.get %d %s' % (e, e)) # pylint: disable=bad-string-format-type, consider-using-f-string
+        zone_id = cloudflare_get_zone_id(client, hostname)
+
+        # Verify fetching zone_id succeeded
+        if zone_id is None:
+            log_msg('DNS Zone ID was not found. Verify API token is valid and has access to the desired zone')
+            return "apierror_zone_id"
 
         # Get the DNS record ID
-        try:
-            records = client.dns.records.list(zone_id=zone_id)
-            for record in records:
-                if record.name == record_name:
-                    record_id = record.id
-        except cloudflare.APIConnectionError as e:
-            log_msg('/zones.dns_records.get %d %s' % (e, e)) # pylint: disable=bad-string-format-type, consider-using-f-string
+        record_id = cloudflare_get_record_id(client, zone_id, record_name)
 
-        # Get the current DNS record
-        try:
-            dns_record = client.dns.records.get(dns_record_id=record_id, zone_id=zone_id)
-            # Set variables from the current record data
-            record_content = dns_record.content
-            record_ttl_current = dns_record.ttl
-        except cloudflare.APIConnectionError as e:
-            log_msg('/zones.dns_records.get %d %s' % (e, e)) # pylint: disable=bad-string-format-type, consider-using-f-string
+        # Verify fetching record_id succeeded
+        if record_id is None:
+            log_msg('DNS Record ID not found. Verify that the target record exists')
+            return "apierror_record_id"
 
-        # Test if the record needs updating
+        # Get the current DNS record details
+        record_content, record_ttl_current = cloudflare_get_record_details(client, zone_id, record_id)
+
+        # Verify fetching record_content succeeded
+        if record_content is None or record_ttl_current is None:
+            log_msg('Error retrieving current record details from API')
+            return "apierror_record_content"
+
+        # Check if the record needs updating
         if record_content != ip or record_ttl_current != record_ttl:
-            log_msg("A DNS record update is needed for " + record_name)
+            log_msg('A DNS record update is needed for ' + record_name)
 
             # Update the record
-            try:
-                client.dns.records.update(zone_id=zone_id, dns_record_id=record_id,
-                    type=record_type,
-                    name=record_name,
-                    content=ip,
-                    ttl=record_ttl)
-                log_msg('DNS record updated successfully: ' + record_name + ' (' + ip + ')')
-                response = "good " + ip
-            except cloudflare.APIConnectionError as e:
-                log_msg('/zones.dns_records.put %d %s' % (e, e)) # pylint: disable=bad-string-format-type, consider-using-f-string
-                response = "dnserr"
+            response = cloudflare_update_record(client, zone_id, record_id, record_name, ip)
+
+            # Verify updating DNS record succeeded
+            if response is None:
+                log_msg('The DNS record was not updated successfully')
+                return "apierror_update"
+
         else:
             log_msg('No update needed for ' + hostname + ' (' + ip + ')')
             response = "nochg " + ip
     else:
         log_msg('No api token has been configured for Cloudflare')
         response = "noapitoken"
+
+    return response
+
+def cloudflare_get_zone_id(client, hostname):
+    # Initialize zone ID variable
+    zone_id = None
+
+    try:
+        zones = client.zones.list()
+        for zone in zones:
+            if zone.name in hostname:
+                zone_id = zone.id
+    except APIConnectionError as e:
+        print("The server could not be reached")
+        print(e.__cause__)  # an underlying Exception, likely raised within httpx.
+    except RateLimitError:
+        print("A 429 status code was received; we should back off a bit.")
+    except APIStatusError as e:
+        print("A non-200-range status code was received")
+        print(e.status_code)
+        print(e.response)
+
+    return zone_id
+
+def cloudflare_get_record_id(client, zone_id, record_name):
+    # Initialize record ID variable
+    record_id = None
+
+    try:
+        records = client.dns.records.list(zone_id=zone_id)
+        for record in records:
+            if record.name == record_name:
+                record_id = record.id
+    except APIConnectionError as e:
+        print("The server could not be reached")
+        print(e.__cause__)  # an underlying Exception, likely raised within httpx.
+    except RateLimitError:
+        print("A 429 status code was received; we should back off a bit.")
+    except APIStatusError as e:
+        print("A non-200-range status code was received")
+        print(e.status_code)
+        print(e.response)
+
+    return record_id
+
+def cloudflare_get_record_details(client, zone_id, record_id):
+    # Initialize variables
+    record_content = None
+    record_ttl_current = None
+
+    try:
+        dns_record = client.dns.records.get(dns_record_id=record_id, zone_id=zone_id)
+        # Set variables from the current record data
+        record_content = dns_record.content
+        record_ttl_current = dns_record.ttl
+    except APIConnectionError as e:
+        print("The server could not be reached")
+        print(e.__cause__)  # an underlying Exception, likely raised within httpx.
+    except RateLimitError:
+        print("A 429 status code was received; we should back off a bit.")
+    except APIStatusError as e:
+        print("A non-200-range status code was received")
+        print(e.status_code)
+        print(e.response)
+
+    return record_content, record_ttl_current
+
+def cloudflare_update_record(client, zone_id, record_id, record_name, ip):
+    # Initialize variable
+    response = None
+
+    try:
+        update = client.dns.records.update(zone_id=zone_id, dns_record_id=record_id,
+            type=record_type,
+            name=record_name,
+            content=ip,
+            ttl=record_ttl)
+        response_name = update.name
+        response_content = update.content
+    except APIConnectionError as e:
+        print("The server could not be reached")
+        print(e.__cause__)  # an underlying Exception, likely raised within httpx.
+    except RateLimitError:
+        print("A 429 status code was received; we should back off a bit.")
+    except APIStatusError as e:
+        print("A non-200-range status code was received")
+        print(e.status_code)
+        print(e.response)
+
+    if response_name == record_name and response_content == ip:
+        log_msg('DNS record updated successfully: ' + record_name + ' (' + ip + ')')
+        response = "good " + ip
 
     return response
 
