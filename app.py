@@ -135,15 +135,8 @@ def cloudflare_get_zone_id(client, hostname):
         for zone in zones:
             if zone.name in hostname:
                 zone_id = zone.id
-    except APIConnectionError as e:
-        print('The server could not be reached')
-        print(e.__cause__)  # an underlying Exception, likely raised within httpx.
-    except RateLimitError:
-        print('A 429 status code was received; we should back off a bit.')
-    except APIStatusError as e:
-        print('A non-200-range status code was received')
-        print(e.status_code)
-        print(e.response)
+    except (APIConnectionError, RateLimitError, APIStatusError) as e:
+        cloudflare_handle_error(e)
 
     return zone_id
 
@@ -156,15 +149,8 @@ def cloudflare_get_record_id(client, zone_id, record_name):
         for record in records:
             if record.name == record_name:
                 record_id = record.id
-    except APIConnectionError as e:
-        print('The server could not be reached')
-        print(e.__cause__)  # an underlying Exception, likely raised within httpx.
-    except RateLimitError:
-        print('A 429 status code was received; we should back off a bit.')
-    except APIStatusError as e:
-        print('A non-200-range status code was received')
-        print(e.status_code)
-        print(e.response)
+    except (APIConnectionError, RateLimitError, APIStatusError) as e:
+        cloudflare_handle_error(e)
 
     return record_id
 
@@ -178,15 +164,8 @@ def cloudflare_get_record_details(client, zone_id, record_id):
         # Set variables from the current record data
         record_content = dns_record.content
         record_ttl_current = dns_record.ttl
-    except APIConnectionError as e:
-        print('The server could not be reached')
-        print(e.__cause__)  # an underlying Exception, likely raised within httpx.
-    except RateLimitError:
-        print('A 429 status code was received; we should back off a bit.')
-    except APIStatusError as e:
-        print('A non-200-range status code was received')
-        print(e.status_code)
-        print(e.response)
+    except (APIConnectionError, RateLimitError, APIStatusError) as e:
+        cloudflare_handle_error(e)
 
     return record_content, record_ttl_current
 
@@ -202,21 +181,24 @@ def cloudflare_update_record(client, zone_id, record_id, record_name, ip):
             ttl=record_ttl)
         response_name = update.name
         response_content = update.content
-    except APIConnectionError as e:
-        print('The server could not be reached')
-        print(e.__cause__)  # an underlying Exception, likely raised within httpx.
-    except RateLimitError:
-        print('A 429 status code was received; we should back off a bit.')
-    except APIStatusError as e:
-        print('A non-200-range status code was received')
-        print(e.status_code)
-        print(e.response)
+    except (APIConnectionError, RateLimitError, APIStatusError) as e:
+        cloudflare_handle_error(e)
 
     if response_name == record_name and response_content == ip:
         log_msg('DNS record updated successfully: ' + record_name + ' (' + ip + ')')
         response = 'good ' + ip
 
     return response
+
+def cloudflare_handle_error(e):
+    if isinstance(e, APIConnectionError):
+        print('The Cloudflare API server could not be reached')
+        print(e.__cause__)
+    elif isinstance(e, RateLimitError):
+        print('A 429 status code was received indiciating rate limiting')
+    elif isinstance(e, APIStatusError):
+        print('A non-200-range status code was received: ' + str(e.status_code))
+        print('Response: ' + str(e.response))
 
 def log_msg(msg):
     print(msg)
