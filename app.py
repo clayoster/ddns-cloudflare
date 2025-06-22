@@ -28,7 +28,7 @@ def verify_password(username, password): # pylint: disable=inconsistent-return-s
 
 @auth.error_handler
 def unauthorized():
-    log_msg('Authentication failed')
+    print('Authentication failed')
     return 'badauth'
 
 @app.route('/update')
@@ -43,23 +43,23 @@ def main():
     if 'hostname' in request.args:
         hostname = request.args.get('hostname')
     else:
-        log_msg('The incoming request did not contain a hostname')
+        print('The incoming request did not contain a hostname')
         return 'nohost'
 
     # Set ip variable
     if 'myip' in request.args:
         ip = request.args.get('myip')
     else:
-        log_msg('Incoming request did not contain an IP')
+        print('Incoming request did not contain an IP')
         return 'noip'
 
     # Verify that the provided IP is valid
     test_ip = is_valid_ip(ip)
     if not test_ip:
-        log_msg('The provided IP was not valid: ' + ip)
+        print('The provided IP was not valid: ' + ip)
         return 'invalidip'
 
-    log_msg('Received update request for ' + hostname + ' (' + ip + ')')
+    print('Received update request for ' + hostname + ' (' + ip + ')')
     response = check_cloudflare(hostname, ip)
 
     return response
@@ -86,7 +86,7 @@ def check_cloudflare(hostname, ip):
 
         # Verify fetching zone_id succeeded
         if zone_id is None:
-            log_msg('DNS Zone ID was not found. Verify API token is valid and has access to the desired zone')
+            print('DNS Zone ID was not found. Verify API token is valid and has access to the desired zone')
             return 'apierror_zone_id'
 
         # Get the DNS record ID
@@ -94,7 +94,7 @@ def check_cloudflare(hostname, ip):
 
         # Verify fetching record_id succeeded
         if record_id is None:
-            log_msg('DNS Record ID not found. Verify that the target record exists')
+            print('DNS Record ID not found. Verify that the target record exists')
             return 'apierror_record_id'
 
         # Get the current DNS record details
@@ -102,26 +102,26 @@ def check_cloudflare(hostname, ip):
 
         # Verify fetching record_content succeeded
         if record_content is None or record_ttl_current is None:
-            log_msg('Error retrieving current record details from API')
+            print('Error retrieving current record details from API')
             return 'apierror_record_content'
 
         # Check if the record needs updating
         if record_content != ip or record_ttl_current != record_ttl:
-            log_msg('A DNS record update is needed for ' + record_name)
+            print('A DNS record update is needed for ' + record_name)
 
             # Update the record
             response = cloudflare_update_record(client, zone_id, record_id, record_name, ip)
 
             # Verify updating DNS record succeeded
             if response is None:
-                log_msg('The DNS record was not updated successfully')
+                print('The DNS record was not updated successfully')
                 return 'apierror_update'
 
         else:
-            log_msg('No update needed for ' + hostname + ' (' + ip + ')')
+            print('No update needed for ' + hostname + ' (' + ip + ')')
             response = 'nochg ' + ip
     else:
-        log_msg('No api token has been configured for Cloudflare')
+        print('No api token has been configured for Cloudflare')
         response = 'noapitoken'
 
     return response
@@ -185,7 +185,7 @@ def cloudflare_update_record(client, zone_id, record_id, record_name, ip):
         cloudflare_handle_error(e)
 
     if response_name == record_name and response_content == ip:
-        log_msg('DNS record updated successfully: ' + record_name + ' (' + ip + ')')
+        print('DNS record updated successfully: ' + record_name + ' (' + ip + ')')
         response = 'good ' + ip
 
     return response
@@ -199,9 +199,6 @@ def cloudflare_handle_error(e):
     elif isinstance(e, APIStatusError):
         print('A non-200-range status code was received: ' + str(e.status_code))
         print('Response: ' + str(e.response))
-
-def log_msg(msg):
-    print(msg)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080, debug=True)
