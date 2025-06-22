@@ -29,7 +29,7 @@ def verify_password(username, password): # pylint: disable=inconsistent-return-s
 @auth.error_handler
 def unauthorized():
     log_msg('Authentication failed')
-    return "badauth"
+    return 'badauth'
 
 @app.route('/update')
 @app.route('/nic/update')
@@ -44,20 +44,20 @@ def main():
         hostname = request.args.get('hostname')
     else:
         log_msg('The incoming request did not contain a hostname')
-        return "nohost"
+        return 'nohost'
 
     # Set ip variable
     if 'myip' in request.args:
         ip = request.args.get('myip')
     else:
         log_msg('Incoming request did not contain an IP')
-        return "noip"
+        return 'noip'
 
     # Verify that the provided IP is valid
     test_ip = is_valid_ip(ip)
     if not test_ip:
         log_msg('The provided IP was not valid: ' + ip)
-        return "invalidip"
+        return 'invalidip'
 
     log_msg('Received update request for ' + hostname + ' (' + ip + ')')
     response = check_cloudflare(hostname, ip)
@@ -87,7 +87,7 @@ def check_cloudflare(hostname, ip):
         # Verify fetching zone_id succeeded
         if zone_id is None:
             log_msg('DNS Zone ID was not found. Verify API token is valid and has access to the desired zone')
-            return "apierror_zone_id"
+            return 'apierror_zone_id'
 
         # Get the DNS record ID
         record_id = cloudflare_get_record_id(client, zone_id, record_name)
@@ -95,7 +95,7 @@ def check_cloudflare(hostname, ip):
         # Verify fetching record_id succeeded
         if record_id is None:
             log_msg('DNS Record ID not found. Verify that the target record exists')
-            return "apierror_record_id"
+            return 'apierror_record_id'
 
         # Get the current DNS record details
         record_content, record_ttl_current = cloudflare_get_record_details(client, zone_id, record_id)
@@ -103,7 +103,7 @@ def check_cloudflare(hostname, ip):
         # Verify fetching record_content succeeded
         if record_content is None or record_ttl_current is None:
             log_msg('Error retrieving current record details from API')
-            return "apierror_record_content"
+            return 'apierror_record_content'
 
         # Check if the record needs updating
         if record_content != ip or record_ttl_current != record_ttl:
@@ -115,14 +115,14 @@ def check_cloudflare(hostname, ip):
             # Verify updating DNS record succeeded
             if response is None:
                 log_msg('The DNS record was not updated successfully')
-                return "apierror_update"
+                return 'apierror_update'
 
         else:
             log_msg('No update needed for ' + hostname + ' (' + ip + ')')
-            response = "nochg " + ip
+            response = 'nochg ' + ip
     else:
         log_msg('No api token has been configured for Cloudflare')
-        response = "noapitoken"
+        response = 'noapitoken'
 
     return response
 
@@ -136,12 +136,12 @@ def cloudflare_get_zone_id(client, hostname):
             if zone.name in hostname:
                 zone_id = zone.id
     except APIConnectionError as e:
-        print("The server could not be reached")
+        print('The server could not be reached')
         print(e.__cause__)  # an underlying Exception, likely raised within httpx.
     except RateLimitError:
-        print("A 429 status code was received; we should back off a bit.")
+        print('A 429 status code was received; we should back off a bit.')
     except APIStatusError as e:
-        print("A non-200-range status code was received")
+        print('A non-200-range status code was received')
         print(e.status_code)
         print(e.response)
 
@@ -157,12 +157,12 @@ def cloudflare_get_record_id(client, zone_id, record_name):
             if record.name == record_name:
                 record_id = record.id
     except APIConnectionError as e:
-        print("The server could not be reached")
+        print('The server could not be reached')
         print(e.__cause__)  # an underlying Exception, likely raised within httpx.
     except RateLimitError:
-        print("A 429 status code was received; we should back off a bit.")
+        print('A 429 status code was received; we should back off a bit.')
     except APIStatusError as e:
-        print("A non-200-range status code was received")
+        print('A non-200-range status code was received')
         print(e.status_code)
         print(e.response)
 
@@ -179,12 +179,12 @@ def cloudflare_get_record_details(client, zone_id, record_id):
         record_content = dns_record.content
         record_ttl_current = dns_record.ttl
     except APIConnectionError as e:
-        print("The server could not be reached")
+        print('The server could not be reached')
         print(e.__cause__)  # an underlying Exception, likely raised within httpx.
     except RateLimitError:
-        print("A 429 status code was received; we should back off a bit.")
+        print('A 429 status code was received; we should back off a bit.')
     except APIStatusError as e:
-        print("A non-200-range status code was received")
+        print('A non-200-range status code was received')
         print(e.status_code)
         print(e.response)
 
@@ -203,18 +203,18 @@ def cloudflare_update_record(client, zone_id, record_id, record_name, ip):
         response_name = update.name
         response_content = update.content
     except APIConnectionError as e:
-        print("The server could not be reached")
+        print('The server could not be reached')
         print(e.__cause__)  # an underlying Exception, likely raised within httpx.
     except RateLimitError:
-        print("A 429 status code was received; we should back off a bit.")
+        print('A 429 status code was received; we should back off a bit.')
     except APIStatusError as e:
-        print("A non-200-range status code was received")
+        print('A non-200-range status code was received')
         print(e.status_code)
         print(e.response)
 
     if response_name == record_name and response_content == ip:
         log_msg('DNS record updated successfully: ' + record_name + ' (' + ip + ')')
-        response = "good " + ip
+        response = 'good ' + ip
 
     return response
 
