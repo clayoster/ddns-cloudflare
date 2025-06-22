@@ -10,7 +10,7 @@ Container images are based on Alpine Linux and are available for these platforms
 
 ---
 
-The primary purposes for building yet another DDNS tool for updating Cloudflare records:
+The primary reasons for building *yet another* DDNS tool for updating Cloudflare records:
 - Many other solutions depend upon using a ***Global*** API token which is unacceptable for this singular purpose. This solution allows the use of a API token scoped with privileges to edit a single DNS zone.
   - Unfortunately Cloudflare does not allow limiting the edit privileges to a single DNS record in a zone at this point.
 - Self-hosted option for receiving DDNS updates from a router or other local source rather than depending on an external service for detecting public IP address changes
@@ -74,4 +74,3 @@ Additional recommendations:
 
 ## To-Dos
 - Make "hostname" compatible with accepting up to 20 comma-delimited domain names
-- Upgrade python-cloudflare dependency to version 3 and complete corresponding rewrite
