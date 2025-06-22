@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import ipaddress
 import os
 import cloudflare
 from cloudflare import Cloudflare
@@ -35,30 +36,41 @@ def unauthorized():
 @app.route('/nic/update')
 @auth.login_required
 def main():
+    # Initialize variables
+    hostname = None
+    ip = None
+
     # Set hostname variable
     if 'hostname' in request.args:
         hostname = request.args.get('hostname')
     else:
-        hostname = 'blank'
+        log_msg('The incoming request did not contain a hostname')
+        return "nohost"
 
     # Set ip variable
     if 'myip' in request.args:
         ip = request.args.get('myip')
     else:
-        ip = 'blank'
+        log_msg('Incoming request did not contain an IP')
+        return "noip"
 
-    # Test inputs to determine the next step
-    if hostname == 'blank':
-        log_msg('Incoming request did not contain an IP')
-        response = "nohost"
-    elif ip == 'blank':
-        log_msg('Incoming request did not contain an IP')
-        response = "noip"
-    else:
-        log_msg('Received update request for ' + hostname + ' (' + ip + ')')
-        response = check_cloudflare(hostname, ip)
+    # Verify that the provided IP is valid
+    test_ip = is_valid_ip(ip)
+    if not test_ip:
+        log_msg('The provided IP was not valid: ' + ip)
+        return "invalidip"
+
+    log_msg('Received update request for ' + hostname + ' (' + ip + ')')
+    response = check_cloudflare(hostname, ip)
 
     return response
+
+def is_valid_ip(ip):
+    try:
+        ipaddress.ip_address(ip)
+        return True
+    except ValueError:
+        return False
 
 # Cloudflare Functions
 def check_cloudflare(hostname, ip):
