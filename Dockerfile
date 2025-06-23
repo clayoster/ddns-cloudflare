@@ -17,6 +17,7 @@ COPY . /app
 # and create app user
 RUN set -ex \
     && apk upgrade --available --no-cache \
+    && apk add curl \
     && rm -rf /var/cache/apk/* \
     && pip install --no-cache-dir -r app-requirements.txt \
     && pip cache purge \
