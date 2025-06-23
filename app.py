@@ -31,6 +31,10 @@ def unauthorized():
     print('Authentication failed')
     return 'badauth'
 
+@app.route('/health')
+def healthcheck():
+    return "healthy"
+
 @app.route('/update')
 @app.route('/nic/update')
 @auth.login_required
