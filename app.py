@@ -58,14 +58,14 @@ def main():
         hostname = request.args.get('hostname')
     else:
         print('The incoming request did not contain a hostname')
-        return 'nohost'
+        return 'nohost', 400
 
     # Set ip variable
     if 'myip' in request.args:
         ip = request.args.get('myip')
     else:
         print('Incoming request did not contain an IP')
-        return 'noip'
+        return 'noip', 400
 
     # Verify that the provided IP is valid
     test_ip = is_valid_ip(ip)
@@ -101,7 +101,7 @@ def check_cloudflare(hostname, ip):
         # Verify fetching zone_id succeeded
         if zone_id is None:
             print('DNS Zone ID was not found. Verify API token is valid and has access to the desired zone')
-            return 'apierror_zone_id'
+            return 'apierror_zone_id', 500
 
         # Get the DNS record ID
         record_id = cloudflare_get_record_id(client, zone_id, record_name)
@@ -109,7 +109,7 @@ def check_cloudflare(hostname, ip):
         # Verify fetching record_id succeeded
         if record_id is None:
             print('DNS Record ID not found. Verify that the target record exists')
-            return 'apierror_record_id'
+            return 'apierror_record_id', 500
 
         # Get the current DNS record details
         record_content, record_ttl_current = cloudflare_get_record_details(client, zone_id, record_id)
@@ -117,7 +117,7 @@ def check_cloudflare(hostname, ip):
         # Verify fetching record_content succeeded
         if record_content is None or record_ttl_current is None:
             print('Error retrieving current record details from API')
-            return 'apierror_record_content'
+            return 'apierror_record_content', 500
 
         # Check if the record needs updating
         if record_content != ip or record_ttl_current != record_ttl:
@@ -129,7 +129,7 @@ def check_cloudflare(hostname, ip):
             # Verify updating DNS record succeeded
             if response is None:
                 print('The DNS record was not updated successfully')
-                return 'apierror_update'
+                return 'apierror_update', 500
 
         else:
             print('No update needed for ' + hostname + ' (' + ip + ')')

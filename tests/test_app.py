@@ -27,13 +27,13 @@ def test_missing_hostname(app, client):
     auth_headers = basic_auth('testuser', 'testpass')
     res = client.get('/nic/update?myip=0.0.0.0', headers=auth_headers)
     assert b'nohost' in res.data
-    assert res.status_code == 200
+    assert res.status_code == 400
 
 def test_missing_ip(app, client):
     auth_headers = basic_auth('testuser', 'testpass')
     res = client.get('/nic/update?hostname=test.domain.com', headers=auth_headers)
     assert b'noip' in res.data
-    assert res.status_code == 200
+    assert res.status_code == 400
 
 def test_bad_ip(app, client):
     auth_headers = basic_auth('testuser', 'testpass')
