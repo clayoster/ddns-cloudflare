@@ -1,5 +1,6 @@
 import base64
 import os
+import subprocess
 
 def test_env_vars():
     assert os.environ["AUTH_USER"] == "testuser"
@@ -38,3 +39,17 @@ def test_healthcheck(app, client):
     res = client.get('/health')
     assert b'healthy' in res.data
     assert res.status_code == 200
+
+def test_without_auth_variables(monkeypatch):
+    monkeypatch.delenv("AUTH_USER", raising=False)
+    monkeypatch.delenv("AUTH_PASS", raising=False)
+
+    result = subprocess.run(["python3", "app.py"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=os.environ.copy()
+    )
+
+    # Confirm the application fails to start without AUTH_USER and AUTH_PASS set
+    assert result.returncode != 0
+    assert b'Authentication is not configured' in result.stdout

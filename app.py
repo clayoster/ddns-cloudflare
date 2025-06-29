@@ -2,6 +2,7 @@
 
 import ipaddress
 import os
+import sys
 from cloudflare import Cloudflare, APIConnectionError, RateLimitError, APIStatusError
 from flask import Flask, request
 from flask_httpauth import HTTPBasicAuth
@@ -16,6 +17,11 @@ auth_pass = os.environ.get('AUTH_PASS', None)
 api_token = os.environ.get('API_TOKEN', None)
 record_type = os.environ.get('RECORD_TYPE', 'A')
 record_ttl = os.environ.get('RECORD_TTL', 60)
+
+# Test if auth_user and auth_pass have been set and exit if they have not
+if not auth_user or not auth_pass:
+    print('Authentication is not configured, exiting app')
+    sys.exit(1)
 
 users = {
     auth_user: generate_password_hash(auth_pass)
