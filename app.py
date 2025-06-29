@@ -71,7 +71,7 @@ def main():
     test_ip = is_valid_ip(ip)
     if not test_ip:
         print('The provided IP was not valid: ' + ip)
-        return 'invalidip'
+        return 'invalidip', 400
 
     print('Received update request for ' + hostname + ' (' + ip + ')')
     response = check_cloudflare(hostname, ip)

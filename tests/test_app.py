@@ -35,6 +35,12 @@ def test_missing_ip(app, client):
     assert b'noip' in res.data
     assert res.status_code == 200
 
+def test_bad_ip(app, client):
+    auth_headers = basic_auth('testuser', 'testpass')
+    res = client.get('/nic/update?hostname=test.domain.com&myip=0.0.0.', headers=auth_headers)
+    assert b'invalidip' in res.data
+    assert res.status_code == 400
+
 def test_healthcheck(app, client):
     res = client.get('/health')
     assert b'healthy' in res.data
