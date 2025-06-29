@@ -37,6 +37,10 @@ def unauthorized():
     print('Authentication failed')
     return 'badauth'
 
+@app.route('/')
+def bare_request():
+    return 'Requests need to be made to /nic/update /update', 400
+
 @app.route('/health')
 def healthcheck():
     return "healthy"
