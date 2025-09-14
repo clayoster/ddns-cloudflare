@@ -48,7 +48,7 @@ def test_healthcheck(app, client):
 
 def test_bareurl(app, client):
     res = client.get('/')
-    assert b'Requests need to be made to /nic/update /update' in res.data
+    assert b'Requests need to be made to /nic/update or /update' in res.data
     assert res.status_code == 400
 
 def test_without_auth_variables(monkeypatch):

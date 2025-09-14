@@ -39,7 +39,7 @@ def unauthorized():
 
 @app.route('/')
 def bare_request():
-    return 'Requests need to be made to /nic/update /update', 400
+    return 'Requests need to be made to /nic/update or /update', 400
 
 @app.route('/health')
 def healthcheck():
