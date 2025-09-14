@@ -43,6 +43,7 @@ def bare_request():
 
 @app.route('/health')
 def healthcheck():
+    """Return the healthcheck"""
     return "healthy"
 
 @app.route('/update')
