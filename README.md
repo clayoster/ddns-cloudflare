@@ -44,7 +44,9 @@ Example information that will be used below:
 curl "http://ddns-user:ddns-password@ddns.example.com:8080/nic/update?hostname=home.example.com&myip=0.0.0.0"
 ```
 
-## Deployment with Docker Compose (Recommended)
+## Deployment Options
+
+### Docker Compose (Recommended)
 
 *Note: The application requires authentication to be configure via the AUTH_USER and AUTH_PASS environment variables. Without those set, the app will fail to start successfully which is intentional.*
 
@@ -68,6 +70,173 @@ services:
         - "8080:8080"
 ```
 
+### Kubernetes
+
+Example Kubernetes manifest file defining the following items:
+- Namespace
+- Secret
+- Deployment (A single pod with health checks)
+- Service
+- Ingress (Configured for nginx ingress with example domain "ddns.example.com")
+
+```yaml
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ddns-cloudflare
+---
+apiVersion: v1
+kind: Secret
+metadata:
+    name: ddns-cloudflare
+    namespace: ddns-cloudflare
+type: Opaque
+stringData:
+    # Encrypt with SOPS or a similar tool
+    AUTH_USER: ddns-user
+    AUTH_PASS: ddns-password
+    API_TOKEN: supersecretapitoken
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ddns-cloudflare
+  namespace: ddns-cloudflare
+  labels:
+    app: ddns-cloudflare
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ddns-cloudflare
+  template:
+    metadata:
+      labels:
+        app: ddns-cloudflare
+    spec:
+      containers:
+      - name: ddns-cloudflare
+        image: ghcr.io/clayoster/ddns-cloudflare:latest
+        env:
+        - name: AUTH_USER
+          valueFrom:
+            secretKeyRef:
+              name: ddns-cloudflare
+              key: AUTH_USER
+        - name: AUTH_PASS
+          valueFrom:
+            secretKeyRef:
+              name: ddns-cloudflare
+              key: AUTH_PASS
+        - name: API_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: ddns-cloudflare
+              key: API_TOKEN
+        ports:
+          - containerPort: 8080
+            name: 8080tcp
+            protocol: TCP
+        resources: {}
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 30
+          successThreshold: 1
+          timeoutSeconds: 3
+          failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ddns-cloudflare
+  namespace: ddns-cloudflare
+spec:
+  selector:
+    app: ddns-cloudflare
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ddns-cloudflare
+  namespace: ddns-cloudflare
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: ddns.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: ddns-cloudflare
+            port:
+              number: 80
+```
+
+Optionally, you can deploy an inadyn pod to send updates into to the ddns-cloudflare pod
+
+- inadyn configuration file defined within a secret
+- Deployment (A single pod with health checks)
+  - Mounts the secret as a file /etc/inadyn/inadyn.conf
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+    name: inadyn-config
+    namespace: ddns-cloudflare
+type: Opaque
+stringData:
+    # Encrypt with SOPS or a similar tool
+    inadyn.conf: |-
+        custom home.example.com:1 {
+            hostname = "home.example.com"
+            username = "ddns-user"
+            password = "ddns-password"
+            ddns-server = "ddns.example.com"
+            ddns-path = "/nic/update?hostname=%h&myip=%i"
+        }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inadyn
+  namespace: ddns-cloudflare
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: inadyn
+  template:
+    metadata:
+      labels:
+        app: inadyn
+    spec:
+      containers:
+        - name: inadyn
+          image: troglobit/inadyn:v2.12.0
+          args: ["--config", "/etc/inadyn/inadyn.conf"]
+          volumeMounts:
+            - name: inadyn-config
+              mountPath: /etc/inadyn
+              readOnly: true
+      volumes:
+        - name: inadyn-config
+          secret:
+            secretName: inadyn-config
+```
+---
 Additional recommendations:
 - Only run this container on an internal network and not exposed to the internet
 - Run this behind a reverse proxy with HTTPS configured to keep requests encrypted
