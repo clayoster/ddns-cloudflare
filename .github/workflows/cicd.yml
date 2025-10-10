@@ -27,7 +27,6 @@ jobs:
           pylint app.py
 
   test:
-    needs: lint
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -48,7 +47,7 @@ jobs:
           python -m pytest -v
 
   build:
-    needs: test
+    needs: [lint, test]
     if: github.ref_type == 'tag'
     runs-on: ubuntu-latest
     permissions:
