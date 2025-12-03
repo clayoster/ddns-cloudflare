@@ -225,7 +225,7 @@ spec:
     spec:
       containers:
         - name: inadyn
-          image: troglobit/inadyn:v2.12.0
+          image: troglobit/inadyn:v2.13.0
           args: ["--config", "/etc/inadyn/inadyn.conf"]
           volumeMounts:
             - name: inadyn-config
