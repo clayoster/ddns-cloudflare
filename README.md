@@ -89,8 +89,8 @@ metadata:
 apiVersion: v1
 kind: Secret
 metadata:
-    name: ddns-cloudflare
-    namespace: ddns-cloudflare
+  name: ddns-cloudflare
+  namespace: ddns-cloudflare
 type: Opaque
 stringData:
     # Encrypt with SOPS or a similar tool
@@ -116,39 +116,39 @@ spec:
         app: ddns-cloudflare
     spec:
       containers:
-      - name: ddns-cloudflare
-        image: ghcr.io/clayoster/ddns-cloudflare:latest
-        env:
-        - name: AUTH_USER
-          valueFrom:
-            secretKeyRef:
-              name: ddns-cloudflare
-              key: AUTH_USER
-        - name: AUTH_PASS
-          valueFrom:
-            secretKeyRef:
-              name: ddns-cloudflare
-              key: AUTH_PASS
-        - name: API_TOKEN
-          valueFrom:
-            secretKeyRef:
-              name: ddns-cloudflare
-              key: API_TOKEN
-        ports:
-          - containerPort: 8080
-            name: 8080tcp
-            protocol: TCP
-        resources: {}
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 8080
-            scheme: HTTP
-          initialDelaySeconds: 10
-          periodSeconds: 30
-          successThreshold: 1
-          timeoutSeconds: 3
-          failureThreshold: 3
+        - name: ddns-cloudflare
+          image: ghcr.io/clayoster/ddns-cloudflare:latest
+          env:
+            - name: AUTH_USER
+              valueFrom:
+                secretKeyRef:
+                  name: ddns-cloudflare
+                  key: AUTH_USER
+            - name: AUTH_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: ddns-cloudflare
+                  key: AUTH_PASS
+            - name: API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: ddns-cloudflare
+                  key: API_TOKEN
+          ports:
+            - containerPort: 8080
+              name: 8080tcp
+              protocol: TCP
+          resources: {}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 3
+            failureThreshold: 3
 ---
 apiVersion: v1
 kind: Service
@@ -172,16 +172,16 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-  - host: ddns.example.com
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: ddns-cloudflare
-            port:
-              number: 80
+    - host: ddns.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ddns-cloudflare
+                port:
+                  number: 80
 ```
 
 Optionally, you can deploy an inadyn pod to send updates into to the ddns-cloudflare pod
@@ -194,8 +194,8 @@ Optionally, you can deploy an inadyn pod to send updates into to the ddns-cloudf
 apiVersion: v1
 kind: Secret
 metadata:
-    name: inadyn-config
-    namespace: ddns-cloudflare
+  name: inadyn-config
+  namespace: ddns-cloudflare
 type: Opaque
 stringData:
     # Encrypt with SOPS or a similar tool
