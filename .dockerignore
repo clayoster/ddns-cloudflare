@@ -1,0 +1,7 @@
+# Ignore everything by default
+**
+
+# Allow only what the image build process needs
+!app.py
+!gunicorn.conf.py
+!*requirements.txt
