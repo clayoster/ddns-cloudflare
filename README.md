@@ -5,8 +5,6 @@ This is a self-hosted DDNS service for receiving public IP updates from a router
 Container images are based on Alpine Linux and are available for these platforms:
   - linux/amd64
   - linux/arm64
-  - linux/arm/v6
-  - linux/arm/v7
 
 ---
 
