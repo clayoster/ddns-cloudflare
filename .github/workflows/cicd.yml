@@ -5,17 +5,18 @@ on: [push]
 env:
   PYTHON_VERSION: "3.13"
   # Define actions as YAML anchors for a single place to manage versions
-  # v6.0.2
+  # These aren't actually environment variables, but this is a convenient place to store them for reuse in the workflow steps
+  # actions/checkout v6.0.2
   ACTION_CHECKOUT: &checkout actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-  # v6.2.0
+  # actions/setup-python v6.2.0
   ACTION_SETUP_PYTHON: &setup-python actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
-  # v4.0.0
+  # actions/setup-buildx v4.0.0
   ACTION_DOCKER_SETUP_BUILDX: &docker-setup-buildx docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd
-  # v4.0.0
+  # actions/login v4.0.0
   ACTION_DOCKER_LOGIN: &docker-login docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2
-  # v6.0.0
+  # actions/metadata v6.0.0
   ACTION_DOCKER_METADATA: &docker-metadata docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf
-  # v7.0.0
+  # actions/build-push v7.0.0
   ACTION_DOCKER_BUILD_PUSH: &docker-build-push docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294
 
 jobs:
