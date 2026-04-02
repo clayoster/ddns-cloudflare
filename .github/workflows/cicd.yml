@@ -30,10 +30,10 @@ jobs:
         uses: *setup-python
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
           pip install --no-cache-dir -r app-requirements.txt -r app-dev-requirements.txt
 
       - name: Run pylint
@@ -50,10 +50,10 @@ jobs:
         uses: *setup-python
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
           pip install --no-cache-dir -r app-requirements.txt -r app-dev-requirements.txt
 
       - name: Run pytest
