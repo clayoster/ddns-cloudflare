@@ -37,7 +37,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install --no-cache-dir -r app-requirements.txt -r app-dev-requirements.txt
+          pip install -r app-requirements.txt -r app-dev-requirements.txt
 
       - name: Run pylint
         run: |
@@ -60,7 +60,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install --no-cache-dir -r app-requirements.txt -r app-dev-requirements.txt
+          pip install -r app-requirements.txt -r app-dev-requirements.txt
 
       - name: Run pytest
         run: |
