@@ -21,7 +21,7 @@ RUN set -ex \
     && rm -rf /var/cache/apk/* \
     && pip install --no-cache-dir -r app-requirements.txt \
     && pip cache purge \
-    && adduser -D app
+    && adduser -D -u 1234 app
 
 # Expose port 8080
 EXPOSE 8080
@@ -47,7 +47,7 @@ ENV PYTHONDONTWRITEBYTECODE=1
 FROM base AS prod
 
 # Run app as 'app' user
-USER app
+USER 1234
 
 # Run the python app with gunicorn (settings are in gunicorn.conf.py)
 CMD ["gunicorn", "app:app"]
