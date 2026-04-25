@@ -1,4 +1,5 @@
 workers = 1
+control_socket_disable = True
 accesslog = '-'
 errorlog = '-'
 #loglevel = 'debug'
